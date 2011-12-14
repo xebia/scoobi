@@ -54,7 +54,7 @@ class TaggedKeyClassBuilder
 
     tags.foreach { case (t, (_, _, grp)) =>
       /* 'comparerN' - Ordering type class field for each tagged-type. */
-      addTypeClassModel(grp, "comparer" + t)
+      addTypeClassModel(grp, "grouper" + t)
     }
 
     /* 'compareTo' - peform comparison on tags first then, if equal, perform
@@ -63,7 +63,7 @@ class TaggedKeyClassBuilder
       className + " tk = (" + className + ")$1;" +
       "if (tk.tag() == this.tag()) {" +
         "switch(this.tag()) {" +
-          tags.keys.map(t => "case " + t + ": return comparer" + t + ".sortCompare(value" + t + ", tk.value" + t + ");").mkString +
+          tags.keys.map(t => "case " + t + ": return grouper" + t + ".sortCompare(value" + t + ", tk.value" + t + ");").mkString +
           "default: return 0;" +
         "}" +
       "} else {" +

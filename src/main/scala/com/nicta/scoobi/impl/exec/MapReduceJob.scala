@@ -16,7 +16,6 @@
 package com.nicta.scoobi.impl.exec
 
 import java.io.File
-import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.fs.Path
@@ -27,6 +26,8 @@ import org.apache.hadoop.mapreduce.Partitioner
 import org.apache.hadoop.mapreduce.OutputFormat
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import org.apache.hadoop.io.NullWritable
+import org.apache.hadoop.io.RawComparator
 import org.apache.hadoop.io.compress.GzipCodec
 import org.apache.hadoop.io.compress.CompressionCodec
 import scala.collection.mutable.{Map => MMap}
@@ -52,6 +53,7 @@ import com.nicta.scoobi.impl.plan.CombinerReducer
 import com.nicta.scoobi.impl.rtt.TaggedKey
 import com.nicta.scoobi.impl.rtt.TaggedValue
 import com.nicta.scoobi.impl.rtt.TaggedPartitioner
+import com.nicta.scoobi.impl.rtt.TaggedGroupingComparator
 import com.nicta.scoobi.impl.rtt.ScoobiWritable
 import com.nicta.scoobi.impl.util.UniqueInt
 import com.nicta.scoobi.impl.util.JarBuilder
@@ -116,19 +118,28 @@ class MapReduceJob {
     Scoobi.getUserJars.foreach { jar.addJar(_) }  //  User JARs
 
 
-    /** (K2,V2):
-      *   - are (TaggedKey, TaggedValue), the wrappers for all K-V types
-      *   - generate their runtime classes and add to JAR */
+    /** Sort-and-shuffle:
+      *   - (K2, V2) are (TaggedKey, TaggedValue), the wrappers for all K-V types
+      *   - Partitioner is generated and of type TaggedPartitioner
+      *   - GroupingComparator is generated and of type TaggedGroupingComparator
+      *   - SortComparator is handled by TaggedKey which is WritableComparable */
     val id = UniqueId.get
+
     val tkRtClass = TaggedKey("TK" + id, keyTypes.toMap)
-    val tvRtClass = TaggedValue("TV" + id, valueTypes.toMap)
-
     jar.addRuntimeClass(tkRtClass)
-    jar.addRuntimeClass(tvRtClass)
-
     job.setMapOutputKeyClass(tkRtClass.clazz)
+
+    val tvRtClass = TaggedValue("TV" + id, valueTypes.toMap)
+    jar.addRuntimeClass(tvRtClass)
     job.setMapOutputValueClass(tvRtClass.clazz)
-    job.setPartitionerClass(classOf[TaggedPartitioner])
+
+    val tpRtClass = TaggedPartitioner("TP" + id, keyTypes.toMap)
+    jar.addRuntimeClass(tpRtClass)
+    job.setPartitionerClass(tpRtClass.clazz.asInstanceOf[Class[_ <: Partitioner[_,_]]])
+
+    val tgRtClass = TaggedGroupingComparator("TG" + id, keyTypes.toMap)
+    jar.addRuntimeClass(tgRtClass)
+    job.setGroupingComparatorClass(tgRtClass.clazz.asInstanceOf[Class[_ <: RawComparator[_]]])
 
 
     /** Mappers:
