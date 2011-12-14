@@ -134,6 +134,35 @@ class DList[A : Manifest : WireFormat](private val ast: Smart.DList[A]) {
     parallelDo(dofn)
   }
 
+  /** Builds a new distributed list from this list without any duplicate elements. */
+  def distinct: DList[A] = {
+    import scala.collection.mutable.{Set => MSet}
+
+    /* Cache input values that have not been seen before. And, if a value has been
+     * seen (i.e. is cached), simply drop it.
+     * TODO - make it an actual cache that has a fixed size and has a replacement
+     * policy once it is full otherwise there is the risk of running out of memory. */
+    val dropCached = new DoFn[A, (A, Int)] {
+      val cache: MSet[A] = MSet.empty
+      def setup() = {}
+      def process(input: A, emitter: Emitter[(A, Int)]) = {
+        if (!cache.contains(input)) {
+          emitter.emit((input, 0))
+          cache += input
+        }
+      }
+      def cleanup(emitter: Emitter[(A, Int)]) = {}
+    }
+
+    implicit val distinctGrouping = new Grouping[A] {
+      def partition(key: A, num: Int) = (key.hashCode & Int.MaxValue) % num
+      def sortCompare(x: A, y: A): Int = (x.hashCode - y.hashCode)
+      def groupCompare(x: A, y: A): Int = sortCompare(x, y)
+    }
+
+    parallelDo(dropCached).groupByKey.map(_._1)
+  }
+
   /** Create a new distributed list that is keyed based on a specified function. */
   def by[K : Manifest : WireFormat](kf: A => K): DList[(K, A)] = map { x => (kf(x), x) }
 }
