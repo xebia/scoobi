@@ -45,7 +45,7 @@ class DList[A : Manifest : WireFormat](private val ast: Smart.DList[A]) {
       (implicit ev:   Smart.DList[A] <:< Smart.DList[(K, V)],
                 mK:   Manifest[K],
                 wtK:  WireFormat[K],
-                ordK: Ordering[K],
+                grpK: Grouping[K],
                 mV:   Manifest[V],
                 wtV:  WireFormat[V]): DList[(K, Iterable[V])] = new DList(Smart.GroupByKey(ast))
 
@@ -56,7 +56,7 @@ class DList[A : Manifest : WireFormat](private val ast: Smart.DList[A]) {
       (implicit ev:   Smart.DList[A] <:< Smart.DList[(K,Iterable[V])],
                 mK:   Manifest[K],
                 wtK:  WireFormat[K],
-                ordK: Ordering[K],
+                grpK: Grouping[K],
                 mV:   Manifest[V],
                 wtV:  WireFormat[V]): DList[(K, V)] = new DList(Smart.Combine(ast, f))
 
@@ -115,7 +115,7 @@ class DList[A : Manifest : WireFormat](private val ast: Smart.DList[A]) {
   }
 
   /** Group the values of a distributed list according to some discriminator function. */
-  def groupBy[K : Manifest : WireFormat : Ordering](f: A => K): DList[(K, Iterable[A])] =
+  def groupBy[K : Manifest : WireFormat : Grouping](f: A => K): DList[(K, Iterable[A])] =
     map(x => (f(x), x)).groupByKey
 
   /** Partitions this distributed list into a pair of distributed lists according to some

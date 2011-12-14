@@ -34,6 +34,7 @@ import scala.math._
 
 import com.nicta.scoobi.Scoobi
 import com.nicta.scoobi.WireFormat
+import com.nicta.scoobi.Grouping
 import com.nicta.scoobi.io.DataSource
 import com.nicta.scoobi.io.DataSink
 import com.nicta.scoobi.impl.plan.AST
@@ -67,7 +68,7 @@ class MapReduceJob {
   private val reducers: MMap[List[_ <: DataSink], TaggedReducer[_,_,_]] = MMap.empty
 
   /* The types that will be combined together to form (K2, V2). */
-  private val keyTypes: MMap[Int, (Manifest[_], WireFormat[_], Ordering[_])] = MMap.empty
+  private val keyTypes: MMap[Int, (Manifest[_], WireFormat[_], Grouping[_])] = MMap.empty
   private val valueTypes: MMap[Int, (Manifest[_], WireFormat[_])] = MMap.empty
 
 
@@ -79,7 +80,7 @@ class MapReduceJob {
       mappers(input) += m
 
     m.tags.foreach { tag =>
-      keyTypes   += (tag -> (m.mK, m.wtK, m.ordK))
+      keyTypes   += (tag -> (m.mK, m.wtK, m.grpK))
       valueTypes += (tag -> (m.mV, m.wtV))
     }
   }
