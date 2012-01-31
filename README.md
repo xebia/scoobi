@@ -27,6 +27,9 @@ Scoobi is a library that leverages the Scala programming language to provide a
 programmer friendly abstraction around Hadoop's MapReduce to facilitate rapid
 development of analytics and machine-learning algorithms.
 
+This branch is created to provide unittesting support for scoobi program's. 
+First goal will be to  provide an easy way to unit test your algorith without having a hadoop cluster
+available. We will do this by having a scala implementation of DList.
 
 0.2.0 release notes
 -------------------
