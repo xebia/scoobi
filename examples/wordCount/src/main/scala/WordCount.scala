@@ -46,21 +46,27 @@ object WordCount {
 
     // Firstly we load up all the (new-line-separated) words into a DList
     val lines: DList[String] = TextInput.fromTextFile(inputPath)
-
-    // What we want to do, is record the frequency of words. So we'll convert it to a key-value
-    // pairs where the key is the word, and the value the frequency (which to start with is 1)
-    val keyValuePair: DList[(String, Int)] = lines flatMap { _.split(" ") } map { w => (w, 1) }
-
-    // Now let's group all words that compare the same
-    val grouped: DList[(String, Iterable[Int])] = keyValuePair.groupByKey
-    // Now we have it in the form (Word, ['1', '1', '1', 1' etc.])
-
-    // So what we want to do, is combine all the numbers into a single value (the frequency)
-    val combined: DList[(String, Int)] = grouped.combine((_+_))
+    
+    val combined: DList[(String, Int)] = algorithme(new DListWrapper(lines)).asInstanceOf[DListWrapper[(String, Int)]].dlist;
 
     // We can evaluate this, and write it to a text file
     DList.persist(TextOutput.toTextFile(combined, outputPath + "/word-results"));
   }
+  
+  def algorithme(lines : ListWrapper[String]) : ListWrapper[(String, Int)] = {
+	  // What we want to do, is record the frequency of words. So we'll convert it to a key-value
+	  // pairs where the key is the word, and the value the frequency (which to start with is 1)
+	  val keyValuePair: ListWrapper[(String, Int)] = lines flatMap { _.split(" ") } map { w => (w, 1) }
+	  
+	  // Now let's group all words that compare the same
+	  val grouped: ListWrapper[(String, Iterable[Int])] = keyValuePair.groupByKey
+	  // Now we have it in the form (Word, ['1', '1', '1', 1' etc.])
+	  
+	  // So what we want to do, is combine all the numbers into a single value (the frequency)
+	  val combined: ListWrapper[(String, Int)] = grouped.combine((_+_))
+    
+	  return combined
+  } 
 
   /* Write 'count' random words to the file 'filename', with a high amount of collisions */
   private def generateWords(filename: String, count: Int) {
