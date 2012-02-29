@@ -20,6 +20,9 @@ import com.nicta.scoobi.Scoobi._
 import com.nicta.scoobi.io.text._
 import java.io._
 
+import com.nicta.scoobi.unittest.ListWrapper
+import com.nicta.scoobi.unittest.DListWrapper.fromDList
+import com.nicta.scoobi.unittest.DListWrapper.fromListWrapper
 
 object WordCount {
 
@@ -47,7 +50,7 @@ object WordCount {
     // Firstly we load up all the (new-line-separated) words into a DList
     val lines: DList[String] = TextInput.fromTextFile(inputPath)
     
-    val combined: DList[(String, Int)] = algorithme(new DListWrapper(lines)).asInstanceOf[DListWrapper[(String, Int)]].dlist;
+    val combined: DList[(String, Int)] = algorithme(lines);
 
     // We can evaluate this, and write it to a text file
     DList.persist(TextOutput.toTextFile(combined, outputPath + "/word-results"));

@@ -1,5 +1,6 @@
-package com.nicta.scoobi
+package com.nicta.scoobi.unittest;
 
+import com.nicta.scoobi.WireFormat
 import com.nicta.scoobi.impl.plan.Smart
 
 trait ListWrapper[T] {
